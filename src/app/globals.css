@@ -19,3 +19,16 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.console {
+  background-color: aliceblue;
+  position: fixed;
+  bottom: 4%;
+  left: 2.5%;
+  z-index: 2;
+  height: 100px;
+  width: 95%;
+  border-radius: 12px;
+  border: solid thick #8a2be2;
+  
+}
