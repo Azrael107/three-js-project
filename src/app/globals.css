@@ -28,7 +28,72 @@ body {
   z-index: 2;
   height: 100px;
   width: 95%;
-  border-radius: 12px;
+  border-radius: 20px;
   border: solid thick #8a2be2;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
   
+}
+
+.snow-button {
+  height: 80px;
+  display: inline-block;
+  margin: 15px;
+  padding: 10px;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #a020f0; /* Blue background */
+  border-radius: 20px; /* Slightly rounded corners */
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none; /* Remove underline if used on links */
+  transition: background-color 0.3s, box-shadow 0.3s;
+  align-items: center;
+  justify-content: center;
+  object-fit: contain;
+  object-position: center;
+  overflow: hidden;
+}
+
+.snow-button:hover {
+  background-color: #b83df9; /* Darker blue on hover */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  /*filter: brightness(1) blur(0px); /*Another way to go about or enhance*/
+
+}
+
+.snow-button:active {
+  background-color: #eac1ff; /* Even darker on click */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.snow-button:disabled {
+  background-color: #cccccc;
+  border-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.snow-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%; /* Glossy effect at the top */
+  background: rgba(255, 255, 255, 0.2);
+  border-top-right-radius: 12px;
+  border-top-left-radius: 12px;
+  pointer-events: none;
+  }
+
+.snow-button-img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  color: #ffffff;
 }
