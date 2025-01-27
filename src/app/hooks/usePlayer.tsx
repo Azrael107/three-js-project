@@ -10,12 +10,27 @@ export const usePlayer = (world: any, scene: any) => {
 
   // Load the player model from the GLB file
   useEffect(() => {
+    if (!world || !scene) {
+      console.warn("World or Scene is not yet initialized.");
+      return;
+    }
     loader.load(
-      "/src/hooks/PlayerModel.glb", // Path to your GLB file
+      "/assets/PlayerModel.glb", // Path to your GLB file
       (gltf) => {
         const model = gltf.scene;
         scene.add(model); // Add the model to the scene
+        console.log("model added to scene succesfully");
         playerRef.current = model;
+        model.position.set(10,5,10);
+        model.visible = true;
+        console.log("Player model added to scene:", model.position);
+
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;  // Enable casting shadows
+            child.receiveShadow = true;  // Enable receiving shadows
+          }
+        });
 
         // Create a physics body for the player
         const playerBody = new Body({
@@ -48,13 +63,10 @@ export const usePlayer = (world: any, scene: any) => {
   // Update the player position
   const updatePlayer = () => {
     if (playerRef.current && playerBodyRef.current) {
-      playerRef.current.position.set(
-        playerBodyRef.current.position.x,
-        playerBodyRef.current.position.y,
-        playerBodyRef.current.position.z
-      );
+      const { x, y, z } = playerBodyRef.current.position;
+      playerRef.current.position.set(x, y, z);
     }
   };
 
-  return { updatePlayer };
+  return { updatePlayer }; 
 };

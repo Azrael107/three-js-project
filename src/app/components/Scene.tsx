@@ -1,24 +1,30 @@
-import { useEffect, useState} from "react";
+import { useEffect, useRef} from "react";
 import { useInititializeThreeJS } from "../hooks/useInitializeThreeJS";
 
 export default function Scene() {
-    const {scene, camera, renderer, world, addLuminescentSnow, stopSnow, animationFrameID} = useInititializeThreeJS();
-    const [isSnowing, setIsSnowing] = useState(false);  // Add state to manage snowing
+    const {scene, camera, renderer, world, addLuminescentSnow, stopSnow, snowfallActiveRef, animationFrameID} = useInititializeThreeJS();
 
-    useEffect(() => {        
-        if (isSnowing) {
-            const timeout = setTimeout(() => {addLuminescentSnow();}, 1500)   
+    const handleToggleSnow = () => {
+        snowfallActiveRef.current = !snowfallActiveRef.current;  // Toggle the snowing state
+        updateSnowEffect();
+    }
+
+    const updateSnowEffect = () => {
+        if (snowfallActiveRef.current) {
+            const timeout = setTimeout(() => {addLuminescentSnow();}, 1500)  
+            console.log("snowfall starting momentarily...") 
             return () => clearTimeout(timeout);     
         } else {
             const timeout = setTimeout(() => {stopSnow();}, 1500);
+            console.log("blizzard subsiding...")
             return () => clearTimeout(timeout);
-        }        
-    }, [isSnowing, addLuminescentSnow, stopSnow]);
+        } 
+    };
 
-    const handleToggleSnow = () => {
-        setIsSnowing(prevState => !prevState);  // Toggle the snowing state
-    }
-
+    useEffect(() => {        
+       updateSnowEffect();
+    },[]);
+       
     return (
         <>
             <div className="scene"/>

@@ -1,3 +1,52 @@
+ /*const cleanup = () => {
+    if (animationFrameIDRef.current) cancelAnimationFrame(animationFrameIDRef.current);
+    if (snowfallIntervalIDRef.current) clearInterval(snowfallIntervalIDRef.current);
+  
+    // Remove all lights
+    lightsRef.current?.forEach((ambientLight) => {
+      sceneRef.current?.remove(ambientLight);
+    });
+    lightsRef.current = [];
+    fallingLightsRef.current.forEach(({ light, sphere, body }) => {
+      sceneRef.current?.remove(light);
+      sceneRef.current?.remove(sphere);
+      worldRef.current?.removeBody(body);
+      light.dispose();
+      sphere.geometry.dispose();
+      sphere.material.dispose();
+    });
+    fallingLightsRef.current = [];
+  
+    // Remove models
+    if (modelRef.current) {
+      sceneRef.current?.remove(modelRef.current);
+      modelRef.current = null;
+    }
+    
+    //Dispose of ground
+    /*if (groundRef.current) {
+      sceneRef.current?.remove(groundRef.current.mesh);
+      worldRef.current?.removeBody(groundRef.current.body);
+      groundRef.current.mesh.geometry.dispose();
+      groundRef.current.mesh.material.dispose();
+      groundRef.current = null;
+    }
+  
+    // Dispose of controls
+    controlsRef.current?.dispose();
+  
+    // Dispose of renderer
+    rendererRef.current?.dispose();
+  
+    // Remove resize listener
+    removeEventListener("resize", addWindowResizeListener);
+  
+    // Clear the scene
+    sceneRef.current?.clear();
+  };*/
+
+
+
 import * as THREE from "three";
 THREE.Cache.enabled = true;  // This will enable caching in Three.js
 import { World, Body, Sphere, Plane, Vec3 } from "cannon-es";
@@ -25,10 +74,10 @@ export const useInititializeThreeJS = () => {
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const animationFrameIDRef = useRef<number | null>(null);
   const snowfallIntervalIDRef = useRef<NodeJS.Timeout | null>(null);
-  const snowfallActiveRef = useRef(false);  // Add state to manage snowing
+  //let snowfallActiveRef = useRef(false);  // Add state to manage snowing
 
 
-  const addLuminescentSnow = () => {
+  {/*const addLuminescentSnow = () => {
     if (snowfallIntervalIDRef.current) return;  // Prevent setting multiple intervals
         snowfallIntervalIDRef.current = setInterval(() => {
           const randomZ = (Math.random() * 30) - 15;
@@ -80,7 +129,7 @@ export const useInititializeThreeJS = () => {
           snowfallIntervalIDRef.current = null;  // Clear the reference
           console.log("Snow stopped");
         }
-      };
+      }; */}
 
   useEffect(() => {
     //Create Scene(ORDER NOT INTERCHANGEABLE)
@@ -144,6 +193,7 @@ export const useInititializeThreeJS = () => {
   const { updatePlayer } = usePlayer(worldRef.current, sceneRef.current);
 
   useEffect(() => {
+
     //Create Lights   
     const ambientLight = new THREE.AmbientLight(0x404040, 5); // Color: 0x404040 (soft white), Intensity: 0.2
     sceneRef.current?.add(ambientLight);
@@ -219,8 +269,6 @@ export const useInititializeThreeJS = () => {
 
         // Request animation frame
         animationFrameIDRef.current = requestAnimationFrame(animate);
-        rendererRef.current?.render(sceneRef.current, cameraRef.current);
-        console.log("Rendering...");
     
         const delta = clock.getDelta(); // Get time delta for smooth updates
     
@@ -228,10 +276,10 @@ export const useInititializeThreeJS = () => {
         worldRef.current?.step(1 / 60, delta, 3);
     
         // Update player logic (if any)
-        if(updatePlayer) updatePlayer();
+        updatePlayer();
     
         // Sync falling lights with their physics bodies
-        fallingLightsRef.current?.forEach(({ light, sphere, body }, index) => {
+        {/*fallingLightsRef.current?.forEach(({ light, sphere, body }, index) => {
           if (body.position.y < 1) {
             sceneRef.current?.remove(light);
             sceneRef.current?.remove(sphere);
@@ -241,7 +289,7 @@ export const useInititializeThreeJS = () => {
             light.position.copy(body.position);
             sphere.position.copy(body.position);
           }
-        });
+        }); */}
     
         // Update animation mixer
         if (mixerRef.current) {
@@ -292,7 +340,7 @@ export const useInititializeThreeJS = () => {
   addAnimation();
   addWindowResizeListener();
   //return cleanup;
-}, [sceneRef.current, cameraRef.current, rendererRef.current, updatePlayer]);
+}, [sceneRef.current, cameraRef.current, rendererRef.current]);
 
-  return { scene: sceneRef.current, camera: cameraRef.current, world: worldRef.current, renderer: rendererRef.current, addLuminescentSnow, stopSnow, animationFrameID: animationFrameIDRef.current, snowfallActiveRef};
+  return { scene: sceneRef.current, camera: cameraRef.current, world: worldRef.current, renderer: rendererRef.current, animationFrameID: animationFrameIDRef.current};
 };
