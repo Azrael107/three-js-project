@@ -1,11 +1,11 @@
 import * as THREE from "three";
 THREE.Cache.enabled = true;  // This will enable caching in Three.js
 import { World, Body, Sphere, Plane, Vec3 } from "cannon-es";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { usePlayer } from "../hooks/usePlayer";
 import { useEffect, useRef } from "react";
 
@@ -13,6 +13,7 @@ export const useInititializeThreeJS = () => {
   //References to store objects that persist across re-renders.
   const sceneRef = useRef<|THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const cameraOffsetRef = useRef(new THREE.Vector3(0, 5, 10)); // Offset: Above and behind the player
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const worldRef = useRef<World | null>(null);
   const groundRef = useRef<{mesh: THREE.Mesh, body: Body} | null>(null);
@@ -26,8 +27,9 @@ export const useInititializeThreeJS = () => {
   const animationFrameIDRef = useRef<number | null>(null);
   const snowfallIntervalIDRef = useRef<NodeJS.Timeout | null>(null);
   const snowfallActiveRef = useRef(false);  // Add state to manage snowing
+  const { initPlayer, updatePlayer, playerRef } = usePlayer();
 
-
+  console.log("I'm here", playerRef);
   const addLuminescentSnow = () => {
     if (snowfallIntervalIDRef.current) return;  // Prevent setting multiple intervals
         snowfallIntervalIDRef.current = setInterval(() => {
@@ -139,11 +141,9 @@ export const useInititializeThreeJS = () => {
      cameraRef.current.position.set(0, 5, 10);
      rendererRef.current.setSize(window.innerWidth, window.innerHeight);
      document.body.appendChild(rendererRef.current.domElement);
-  }, []);
 
-  const { updatePlayer } = usePlayer(worldRef.current, sceneRef.current);
-
-  useEffect(() => {
+     initPlayer(worldRef.current, sceneRef.current);
+       
     //Create Lights   
     const ambientLight = new THREE.AmbientLight(0x404040, 5); // Color: 0x404040 (soft white), Intensity: 0.2
     sceneRef.current?.add(ambientLight);
@@ -159,7 +159,7 @@ export const useInititializeThreeJS = () => {
     //Create Post Processing
     const setupPostProcessing = () => {
       // Render Pass: Render the scene normally
-      const renderPass = new RenderPass(sceneRef.current, cameraRef.current);  
+      const renderPass = new RenderPass(sceneRef.current!, cameraRef.current!);  
       // Bloom Pass: Add glow effects
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -169,7 +169,7 @@ export const useInititializeThreeJS = () => {
       );
   
       // Composer: Combine passes & store in ref
-      composerRef.current= new EffectComposer(rendererRef.current);
+      composerRef.current= new EffectComposer(rendererRef.current!);
       composerRef.current.addPass(renderPass);
       composerRef.current.addPass(bloomPass);
       //Storing bloompass to save us headache
@@ -189,8 +189,10 @@ export const useInititializeThreeJS = () => {
           }
           const model = gltf.scene;
           model.castShadow = true;
+          
           sceneRef.current?.add(model);
           modelRef.current = model;
+          //console.log("house here!");
 
           // Animation
           const mixer = new THREE.AnimationMixer(model);
@@ -216,19 +218,30 @@ export const useInititializeThreeJS = () => {
           camera.position.set(player.position.x, player.position.y, player.position.z + 10); 
           camera.lookAt(player.position);
         }*/
+        //if (!playerRef.current || !cameraRef.current || !cameraOffsetRef.current) return; 
 
         // Request animation frame
         animationFrameIDRef.current = requestAnimationFrame(animate);
-        rendererRef.current?.render(sceneRef.current, cameraRef.current);
-        console.log("Rendering...");
+        rendererRef.current?.render(sceneRef.current!, cameraRef.current!);
+        //console.log("Rendering...");
     
         const delta = clock.getDelta(); // Get time delta for smooth updates
     
         // Update physics world
         worldRef.current?.step(1 / 60, delta, 3);
+
+        if (playerRef.current) {
+          const targetPosition = playerRef.current.position.clone().add(cameraOffsetRef.current);
+          cameraRef.current?.position.lerp(targetPosition, 0.1);
+          cameraRef.current?.lookAt(playerRef.current.position);
+          console.log("Player defined", playerRef.current.position);
+        } else {
+          console.warn("PlayerRef is null! Camera cannot follow.");
+        }
     
         // Update player logic (if any)
-        if(updatePlayer) updatePlayer();
+        updatePlayer();
+        //if(initPlayer) initPlayer();   
     
         // Sync falling lights with their physics bodies
         fallingLightsRef.current?.forEach(({ light, sphere, body }, index) => {
@@ -253,8 +266,14 @@ export const useInititializeThreeJS = () => {
         composerRef.current?.render();
       };
     
-      // Start the animation loop
-      animate();
+      // Start the animation loop after player arrives.
+      const waitForPlayer = setInterval(() => {
+        if (playerRef.current) {
+          console.log("Player loaded, starting animation.");
+          clearInterval(waitForPlayer);
+          animate(); // Start animation loop only when player is available
+        }
+      }, 100);
     
       // Pause/Resume animation on tab visibility change
       const handleVisibilityChange = () => {
@@ -270,7 +289,9 @@ export const useInititializeThreeJS = () => {
       // Store cleanup logic for visibility change
       return () => {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
-        cancelAnimationFrame(animationFrameIDRef.current);
+        if (animationFrameIDRef.current !== null) {
+          cancelAnimationFrame(animationFrameIDRef.current);
+        }
       };
     };
 
@@ -292,7 +313,7 @@ export const useInititializeThreeJS = () => {
   addAnimation();
   addWindowResizeListener();
   //return cleanup;
-}, [sceneRef.current, cameraRef.current, rendererRef.current, updatePlayer]);
+}, [sceneRef.current, cameraRef.current, rendererRef.current, initPlayer]);
 
   return { scene: sceneRef.current, camera: cameraRef.current, world: worldRef.current, renderer: rendererRef.current, addLuminescentSnow, stopSnow, animationFrameID: animationFrameIDRef.current, snowfallActiveRef};
 };

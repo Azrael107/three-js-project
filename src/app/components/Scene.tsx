@@ -1,5 +1,6 @@
 import { useEffect, useRef} from "react";
 import { useInititializeThreeJS } from "../hooks/useInitializeThreeJS";
+import { usePlayer } from "../hooks/usePlayer";
 
 export default function Scene() {
     const {scene, camera, renderer, world, addLuminescentSnow, stopSnow, snowfallActiveRef, animationFrameID} = useInititializeThreeJS();
